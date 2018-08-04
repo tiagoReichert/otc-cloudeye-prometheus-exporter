@@ -29,22 +29,19 @@ def main():
 
     start_http_server(8000)
 
-    # Get OTC token to authenticate against API
-    token = get_token()
-
     # Generate Prometheus Metrics
-    metrics = get_available_metrics(token=token)
+    metrics = get_available_metrics()
     prometheus_metrics = generate_prometheus_metrics(metrics=metrics)
 
     # Endless loop gathering metrics (sleep's for time defined on config file)
     while True:
-        metrics = get_available_metrics(token=token)
-        get_metric_value(token=token, prometheus_metrics=prometheus_metrics, metrics=metrics)
+        metrics = get_available_metrics()
+        get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
         time.sleep(float(config.get('EXPORTER_CONFIG', 'refresh_time')))
 
 
-def get_available_metrics(token):
-    r = requests.get(config.get('OTC_ENDPOINTS', 'available_metrics'), headers={'X-Auth-Token': token})
+def get_available_metrics():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'available_metrics'), headers={'X-Auth-Token': get_token()})
     if r.status_code == 200:
         metrics = []
         wanted_namespaces = ['SYS.%s' % n for n in config.get('EXPORTER_CONFIG', 'namespaces').split(',')]
@@ -54,7 +51,8 @@ def get_available_metrics(token):
         return metrics
     elif r.status_code == 401:
         logging.warn("Token seems to be expired, requesting a new one and retrying")
-        return get_available_metrics(request_token())
+        request_token()
+        return get_available_metrics()
     else:
         logging.error("Could not gather available metrics, got result code '%s'" % r.status_code)
 
@@ -72,7 +70,7 @@ def generate_prometheus_metrics(metrics):
     return prometheus_metrics
 
 
-def get_metric_value(token, prometheus_metrics, metrics):
+def get_metric_value(prometheus_metrics, metrics):
     current_time = get_current_metrics_time()
     cloud_eye_base = config.get('OTC_ENDPOINTS', 'cloud_eye_base')
 
@@ -88,7 +86,7 @@ def get_metric_value(token, prometheus_metrics, metrics):
               "&filter=average".format(cloud_eye_base, namespace, metric_name, dimensions_name, dimensions_value,
                                        current_time[0], current_time[1])
 
-        r = requests.get(url, headers={'X-Auth-Token': token})
+        r = requests.get(url, headers={'X-Auth-Token': get_token()})
 
         if r.status_code == 200:
             resp = json.loads(r.text)
@@ -103,7 +101,8 @@ def get_metric_value(token, prometheus_metrics, metrics):
 
         elif r.status_code == 401:
             logging.warn("Token seems to be expired, requesting a new one and retrying")
-            get_metric_value(token=request_token(), prometheus_metrics=prometheus_metrics, metrics=metrics)
+            request_token()
+            get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
             break
         else:
             logging.error("Request for metric '%s' value got result code '%s'" % (full_metric_name, r.status_code))
