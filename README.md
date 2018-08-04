@@ -2,7 +2,7 @@
 Prometheus exporter that gather metrics from Open Telekom Cloud resources over Cloud Eye API
 
 
-### Needed Environment Variable
+### Environment Variables
 - REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 300) [default: 300]
 - NAMESPACES: OTC Namespaces from which you want to get metrics (Example: DMS,ECS,RDS)
 - PROJECT_ID: OTC Project ID
