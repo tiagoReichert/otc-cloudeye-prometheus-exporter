@@ -32,16 +32,19 @@ def main():
     # Get OTC token to authenticate against API
     token = get_token()
 
+    # Generate Prometheus Metrics
+    metrics = get_available_metrics(token=token)
+    prometheus_metrics = generate_prometheus_metrics(metrics=metrics)
+
     # Endless loop gathering metrics (sleep's for time defined on config file)
     while True:
-        metrics = get_avaliable_metrics(token=token)
-        prometheus_metrics = generate_prometheus_metrics(metrics=metrics)
+        metrics = get_available_metrics(token=token)
         get_metric_value(token=token, prometheus_metrics=prometheus_metrics, metrics=metrics)
         time.sleep(float(config.get('EXPORTER_CONFIG', 'refresh_time')))
 
 
-def get_avaliable_metrics(token):
-    r = requests.get(config.get('OTC_ENDPOINTS', 'avaliable_metrics'), headers={'X-Auth-Token': token})
+def get_available_metrics(token):
+    r = requests.get(config.get('OTC_ENDPOINTS', 'available_metrics'), headers={'X-Auth-Token': token})
     if r.status_code == 200:
         metrics = []
         wanted_namespaces = ['SYS.%s' % n for n in config.get('EXPORTER_CONFIG', 'namespaces').split(',')]
@@ -49,9 +52,11 @@ def get_avaliable_metrics(token):
             if metric["namespace"] in wanted_namespaces:
                 metrics.append(metric)
         return metrics
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        return get_available_metrics(request_token())
     else:
-        #todo: This needs to be changed (token validity needs to be verified)
-        logging.error("Could not gather avaliable metrics")
+        logging.error("Could not gather available metrics, got result code '%s'" % r.status_code)
 
 
 def generate_prometheus_metrics(metrics):
@@ -79,27 +84,26 @@ def get_metric_value(token, prometheus_metrics, metrics):
         dimensions_value = m["dimensions"][0]["value"]
         full_metric_name = "%s:%s" % (namespace, metric_name)
 
-        url = "%s?namespace=%s&metric_name=%s&dim.0=%s,%s&from=%s&to=%s&period=300" \
-              "&filter=average" % (cloud_eye_base, namespace, metric_name, dimensions_name, dimensions_value,
-                                   current_time[0], current_time[1])
+        url = "{0}?namespace={1}&metric_name={2}&dim.0={3},{4}&from={5}&to={6}&period=300" \
+              "&filter=average".format(cloud_eye_base, namespace, metric_name, dimensions_name, dimensions_value,
+                                       current_time[0], current_time[1])
 
         r = requests.get(url, headers={'X-Auth-Token': token})
 
         if r.status_code == 200:
             resp = json.loads(r.text)
             if resp['datapoints']:
-                logging.debug("%s for '%s=%s' at %s : %s" %
-                              (full_metric_name, dimensions_name, dimensions_value,
-                               datetime.fromtimestamp(resp['datapoints'][0]['timestamp'] / 1000.0),
-                               resp['datapoints'][0]['average']))
+                logging.debug("{0} for '{1}={2}' at {3} : {4}".format(full_metric_name, dimensions_name,
+                                                                      dimensions_value, datetime.fromtimestamp
+                                                                      (resp['datapoints'][0]['timestamp'] / 1000.0),
+                                                                      resp['datapoints'][0]['average']))
 
                 exec("prometheus_metrics[full_metric_name]['metric'].labels(unit=resp['datapoints'][0]['unit'], "
                      "%s=dimensions_value).set(resp['datapoints'][0]['average'])") % dimensions_name
 
         elif r.status_code == 401:
             logging.warn("Token seems to be expired, requesting a new one and retrying")
-            request_token()
-            get_metric_value()
+            get_metric_value(token=request_token(), prometheus_metrics=prometheus_metrics, metrics=metrics)
             break
         else:
             logging.error("Request for metric '%s' value got result code '%s'" % (full_metric_name, r.status_code))
