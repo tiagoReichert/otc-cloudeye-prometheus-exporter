@@ -31,7 +31,7 @@ services:
       - LOG_LEVEL=DEBUG
 ```
 
-#### Prometheus YML Configuration
+### Prometheus YML Configuration
 ```yaml
   - job_name: 'OTC'
     scrape_interval: 300s
