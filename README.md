@@ -32,7 +32,7 @@ services:
 ```
 
 #### Known Limitations
-For every metric value request it's needed to make a request against the Cloud Eye API.
+For every metric value it's needed to make a request against the Cloud Eye API.
 Unfortunately, there is no other way to gather metric information from the Cloud Eye API.
 Bearing that in mind, take care to not include to much OTC resources, that can be
 limited using the NAMESPACES environment parameter.
