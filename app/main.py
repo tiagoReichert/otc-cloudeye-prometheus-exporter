@@ -17,15 +17,20 @@ import logging.config
 from prometheus_client import start_http_server, Gauge
 import time
 
-# Reading configuration file
-config = configparser.ConfigParser()
-config._interpolation = configparser.ExtendedInterpolation()
-config.read_file(open('/app/config/app_config.ini'))
-
 
 def main():
     # Logging configuration
     logging.config.fileConfig('/app/config/log_config.ini')
+
+    # Reading configuration file
+    global config
+    config = configparser.ConfigParser()
+    config._interpolation = configparser.ExtendedInterpolation()
+    f = open('/app/config/app_config.ini')
+    try:
+        config.read_file(f)
+    finally:
+        f.close()
 
     start_http_server(8000)
 
@@ -126,7 +131,11 @@ def request_token():
                       json=json.loads(config.get('JSON_REQUEST', 'token')))
     if r.status_code == 201:
         config.set('OTC_CREDENTIALS', 'token', r.headers['x-subject-token'])
-        config.write(open('/app/config/app_config.ini', 'w'))
+        f = open('/app/config/app_config.ini', 'w')
+        try:
+            config.write(f)
+        finally:
+            f.close()
         logging.info("New token generated")
         return r.headers['x-subject-token']
     else:
