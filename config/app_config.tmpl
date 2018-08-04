@@ -1,0 +1,40 @@
+[EXPORTER_CONFIG]
+refresh_time={{ .Env.REFRESH_TIME }}
+namespaces={{ .Env.NAMESPACES }}
+
+[OTC_CREDENTIALS]
+project_id = {{ .Env.PROJECT_ID }}
+tenant_name = {{ .Env.TENANT_NAME }}
+username = {{ .Env.USERNAME }}
+password = {{ .Env.PASSWORD }}
+
+[OTC_ENDPOINTS]
+request_token = https://iam.eu-de.otc.t-systems.com/v3/auth/tokens
+cloud_eye_base = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:project_id}/metric-data
+avaliable_metrics = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:project_id}/metrics
+
+[JSON_REQUEST]
+token = {
+	"auth": {
+	"identity": {
+	"methods": [
+	"password"
+	],
+	"password": {
+	"user": {
+	"name": "${OTC_CREDENTIALS:username}",
+	"password": "${OTC_CREDENTIALS:password}",
+	"domain": {
+	"name": "${OTC_CREDENTIALS:tenant_name}"
+	}
+	}
+	}
+	},
+	"scope": {
+	"project": {
+	"id": "${OTC_CREDENTIALS:project_id}"
+	}
+	}
+	}
+	}
+
