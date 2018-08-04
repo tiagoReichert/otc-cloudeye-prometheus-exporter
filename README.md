@@ -31,6 +31,16 @@ services:
       - LOG_LEVEL=DEBUG
 ```
 
+#### Prometheus YML Configuration
+```yaml
+  - job_name: 'OTC'
+    scrape_interval: 300s
+    metrics_path: "/"
+    static_configs:
+      - targets:
+        - <otc-exporter-address>:8000
+```
+
 #### Known Limitations
 For every metric value it's needed to make a request against the Cloud Eye API.
 Unfortunately, there is no other way to gather metric information from the Cloud Eye API.
