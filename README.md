@@ -3,13 +3,13 @@ Prometheus exporter that gather metrics from Open Telekom Cloud resources over C
 
 
 ### Needed Environment Variable
-- REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 300)
+- REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 300) [default: 300]
 - NAMESPACES: OTC Namespaces from which you want to get metrics (Example: DMS,ECS,RDS)
 - PROJECT_ID: OTC Project ID
 - TENANT_NAME: OTC Tenant Name
 - USERNAME: OTC Username
 - PASSWORD: OTC Password
-- LOG_LEVEL: Exporter's log level (Example: WARNING, INFO, DEBUG)
+- LOG_LEVEL: Exporter's log level (Example: WARNING, INFO, DEBUG) [default: INFO]
 
 ### Docker Compose
 ``` yaml
@@ -37,5 +37,5 @@ Unfortunately, there is no other way to gather metric information from the Cloud
 Bearing that in mind, take care to not include to much OTC resources, that can be
 limited using the NAMESPACES environment parameter.
 
-### TODO's
+#### TODO's
 - Token validation

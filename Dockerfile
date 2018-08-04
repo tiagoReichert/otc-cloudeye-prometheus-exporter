@@ -19,5 +19,9 @@ COPY ./config /app/config
 
 EXPOSE 8000
 
-CMD dockerize -template /app/config/app_config.tmpl:/app/config/app_config.ini  -template /app/config/log_config.tmpl:/app/config/log_config.ini python /app/main.py
+# Default variables
+ENV REFRESH_TIME 300
+ENV LOG_LEVEL INFO
+
+CMD dockerize -no-overwrite -template /app/config/app_config.tmpl:/app/config/app_config.ini  -template /app/config/log_config.tmpl:/app/config/log_config.ini python /app/main.py
 
