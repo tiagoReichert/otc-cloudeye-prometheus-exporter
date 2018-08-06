@@ -51,4 +51,5 @@ limited using the NAMESPACES environment parameter.
 - [ ] Show resource name instead of ID
 - [ ] Add support for Rancher Secrets (for Username/Password)
 - [ ] Prefix the exposed metrics name with 'otc_ces_*'
+- [ ] Create Grafana Dashboards
 - [ ] Token Validation
