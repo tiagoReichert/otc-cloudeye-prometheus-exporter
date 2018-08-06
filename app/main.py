@@ -32,6 +32,9 @@ def main():
     finally:
         f.close()
 
+    # Generate resource names x id mapping
+    get_name_mapping()
+
     start_http_server(8000)
 
     # Generate Prometheus Metrics
@@ -40,9 +43,63 @@ def main():
 
     # Endless loop gathering metrics (sleep's for time defined on config file)
     while True:
+        get_name_mapping()
         metrics = get_available_metrics()
         get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
         time.sleep(float(config.get('EXPORTER_CONFIG', 'refresh_time')))
+
+
+def get_name_mapping():
+    get_ecs_mapping()
+    get_dms_mapping()
+    get_rds_mapping()
+
+
+def get_dms_mapping():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'dms_names'), headers={'X-Auth-Token': get_token()})
+    if r.status_code == 200:
+        for queue in json.loads(r.text)["queues"]:
+            config.set('DMS_IDS', queue['id'], queue['name'])
+            logging.debug("Created name entry for DMS '%s'='%s' successfully" % (queue['id'], queue['name']))
+        save_config_file()
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        request_token()
+        get_dms_mapping()
+    else:
+        logging.error("Could not gather DMS names, got result code '%s'" % r.status_code)
+
+
+def get_rds_mapping():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'rds_names'), headers={'X-Auth-Token': get_token(),
+                                                                        'Content-Type': 'application/json',
+                                                                        'X-Language': 'en-us'})
+    if r.status_code == 200:
+        for instance in json.loads(r.text)["instances"]:
+            config.set('RDS_IDS', instance['id'], instance['name'])
+            logging.debug("Created name entry for RDS '%s'='%s' successfully" % (instance['id'], instance['name']))
+        save_config_file()
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        request_token()
+        get_rds_mapping()
+    else:
+        logging.error("Could not gather RDS names, got result code '%s'" % r.status_code)
+
+
+def get_ecs_mapping():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'ecs_names'), headers={'X-Auth-Token': get_token()})
+    if r.status_code == 200:
+        for server in json.loads(r.text)["servers"]:
+            config.set('ECS_IDS', server['id'], server['name'])
+            logging.debug("Created name entry for ECS '%s'='%s' successfully" % (server['id'], server['name']))
+        save_config_file()
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        request_token()
+        get_ecs_mapping()
+    else:
+        logging.error("Could not gather ECS names, got result code '%s'" % r.status_code)
 
 
 def get_available_metrics():
@@ -70,7 +127,8 @@ def generate_prometheus_metrics(metrics):
         dimensions_name = m["dimensions"][0]["name"]
         # Check if metric was not already created
         if "%s:%s" % (namespace, m["metric_name"]) not in prometheus_metrics.keys():
-            vars()[metric_name] = Gauge('OTC_CES_%s' % metric_name, metric_name, ["unit", dimensions_name])
+            vars()[metric_name] = Gauge('OTC_CES_%s' % metric_name, metric_name, ["unit", dimensions_name,
+                                                                                  "resource_name"])
             prometheus_metrics["%s:%s" % (namespace, m["metric_name"])] = eval(metric_name)
     return prometheus_metrics
 
@@ -101,13 +159,17 @@ def get_metric_value(prometheus_metrics, metrics):
         if r.status_code == 200:
             resp = json.loads(r.text)
             if resp['datapoints']:
-                logging.debug("{0} for '{1}={2}' at {3} : {4}".format(full_metric_name, dimensions_name,
-                                                                      dimensions_value, datetime.fromtimestamp
-                                                                      (resp['datapoints'][0]['timestamp'] / 1000.0),
-                                                                      resp['datapoints'][0]['average']))
+                resource_name = get_resource_name(resource_kind=namespace.replace("SYS.", ""),
+                                                  resource_id=dimensions_value)
 
                 exec("prometheus_metrics[full_metric_name].labels(unit=resp['datapoints'][0]['unit'], "
-                     "%s=dimensions_value).set(resp['datapoints'][0]['average'])") % dimensions_name
+                     "%s=dimensions_value, resource_name=resource_name)."
+                     "set(resp['datapoints'][0]['average'])") % dimensions_name
+
+                logging.debug("{0} for '{1}={2}' ({3}) at {4} : {5}".format(full_metric_name, dimensions_name,
+                                                                            dimensions_value, resource_name,
+                                                                            datetime.fromtimestamp(resp['datapoints'][0]['timestamp'] / 1000.0),
+                                                                            resp['datapoints'][0]['average']))
 
         elif r.status_code == 401:
             logging.warn("Token seems to be expired, requesting a new one and retrying")
@@ -119,6 +181,15 @@ def get_metric_value(prometheus_metrics, metrics):
                                                                                       dimensions_value,
                                                                                       datetime.fromtimestamp,
                                                                                       r.status_code))
+
+
+# Check if we have a name for the specified resource, if not return id
+def get_resource_name(resource_kind, resource_id):
+    if config.has_option("%s_IDS" % resource_kind, resource_id):
+        return config.get("%s_IDS" % resource_kind, resource_id)
+    else:
+        logging.warn("Resource name for %s %s not found" % (resource_kind, resource_id))
+        return resource_id
 
 
 # Returns two time values in milliseconds with an difference of 1 second (needed by OTC API)
@@ -139,16 +210,21 @@ def request_token():
                       json=json.loads(config.get('JSON_REQUEST', 'token')))
     if r.status_code == 201:
         config.set('OTC_CREDENTIALS', 'token', r.headers['x-subject-token'])
-        f = open('/app/config/app_config.ini', 'w')
-        try:
-            config.write(f)
-        finally:
-            f.close()
+        save_config_file()
         logging.info("New token generated")
         return r.headers['x-subject-token']
     else:
         logging.error("Request for token got result code '%s'" % r.status_code)
         exit(2)
+
+
+def save_config_file():
+    f = open('/app/config/app_config.ini', 'w')
+    try:
+        config.write(f)
+        logging.debug("Configuration file successfully saved")
+    finally:
+        f.close()
 
 
 if __name__ == '__main__':

@@ -53,7 +53,8 @@ Bearing that in mind, take care to not include to much OTC resources, that can b
 limited using the NAMESPACES environment parameter.
 
 #### TODO's
-- [ ] Show resource name instead of ID
+
+- [ ] Include resource names (already done for: ECS, RDS and DMS)
 - [ ] Add support for Rancher Secrets (for Username/Password)
 - [x] Prefix the exposed metrics name with 'OTC_CES_*'
 - [ ] Create Grafana Dashboards
