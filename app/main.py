@@ -91,6 +91,7 @@ def get_metric_value(prometheus_metrics, metrics):
               "&filter=average".format(cloud_eye_base, namespace, metric_name, dimensions_name, dimensions_value,
                                        current_time[0], current_time[1])
 
+        time.sleep(0.1)  # Wait for 100 milliseconds before every request (needed to don't overload OTC API)
         r = requests.get(url, headers={'X-Auth-Token': get_token()})
 
         if r.status_code == 200:

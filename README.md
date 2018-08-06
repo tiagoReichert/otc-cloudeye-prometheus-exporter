@@ -41,6 +41,11 @@ services:
         - <otc-exporter-address>:8000
 ```
 
+### Grafana Dashboards
+Grafana Dashboards for some OTC services are available on the [Grafana Community catalog](https://grafana.com/orgs/tiagoreichert)
+
+---
+
 #### Known Limitations
 For every metric value it's needed to make a request against the Cloud Eye API.
 Unfortunately, there is no other way to gather metric information from the Cloud Eye API.
@@ -48,4 +53,8 @@ Bearing that in mind, take care to not include to much OTC resources, that can b
 limited using the NAMESPACES environment parameter.
 
 #### TODO's
-- Token validation
+- [ ] Show resource name instead of ID
+- [ ] Add support for Rancher Secrets (for Username/Password)
+- [ ] Prefix the exposed metrics name with 'otc_ces_*'
+- [ ] Create Grafana Dashboards
+- [ ] Token Validation
