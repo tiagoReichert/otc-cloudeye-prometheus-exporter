@@ -70,8 +70,8 @@ def generate_prometheus_metrics(metrics):
         dimensions_name = m["dimensions"][0]["name"]
         # Check if metric was not already created
         if "%s:%s" % (namespace, m["metric_name"]) not in prometheus_metrics.keys():
-            vars()[metric_name] = Gauge(metric_name, metric_name, ["unit", dimensions_name])
-            prometheus_metrics["%s:%s" % (namespace, m["metric_name"])] = {"metric": eval(metric_name)}
+            vars()[metric_name] = Gauge('OTC_CES_%s' % metric_name, metric_name, ["unit", dimensions_name])
+            prometheus_metrics["%s:%s" % (namespace, m["metric_name"])] = eval(metric_name)
     return prometheus_metrics
 
 
@@ -101,7 +101,7 @@ def get_metric_value(prometheus_metrics, metrics):
                                                                       (resp['datapoints'][0]['timestamp'] / 1000.0),
                                                                       resp['datapoints'][0]['average']))
 
-                exec("prometheus_metrics[full_metric_name]['metric'].labels(unit=resp['datapoints'][0]['unit'], "
+                exec("prometheus_metrics[full_metric_name].labels(unit=resp['datapoints'][0]['unit'], "
                      "%s=dimensions_value).set(resp['datapoints'][0]['average'])") % dimensions_name
 
         elif r.status_code == 401:
