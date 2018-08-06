@@ -32,9 +32,6 @@ def main():
     finally:
         f.close()
 
-    # Generate resource names x id mapping
-    get_name_mapping()
-
     start_http_server(8000)
 
     # Generate Prometheus Metrics
