@@ -115,7 +115,10 @@ def get_metric_value(prometheus_metrics, metrics):
             get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
             break
         else:
-            logging.error("Request for metric '%s' value got result code '%s'" % (full_metric_name, r.status_code))
+            logging.error("{0} for '{1}={2}' at {3} got HTTP Status Code: {4}".format(full_metric_name, dimensions_name,
+                                                                                      dimensions_value,
+                                                                                      datetime.fromtimestamp,
+                                                                                      r.status_code))
 
 
 # Returns two time values in milliseconds with an difference of 1 second (needed by OTC API)
