@@ -9,6 +9,7 @@ RUN pip install -r /app/requirements.txt
 
 RUN apk update
 RUN apk add --no-cache openssl
+RUN apk add --no-cache bash
 
 ADD ./binary/dockerize-alpine-linux-amd64-v0.6.1.tar.gz /tmp/dockerize-alpine-linux-amd64-v0.6.1.tar.gz
 RUN mv /tmp/dockerize-alpine-linux-amd64-v0.6.1.tar.gz/dockerize /usr/local/bin/dockerize \
