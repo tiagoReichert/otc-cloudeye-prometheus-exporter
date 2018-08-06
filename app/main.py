@@ -80,7 +80,11 @@ def get_metric_value(prometheus_metrics, metrics):
     cloud_eye_base = config.get('OTC_ENDPOINTS', 'cloud_eye_base')
 
     # For each OTC metric from the defined Namespaces
-    for m in metrics:
+    for idx, m in enumerate(metrics, start=1):
+        # After every 10 metrics sleep for 1 seconds (otherwise OTC API get's overloaded)
+        if idx % 10 == 0:
+            time.sleep(1)
+
         namespace = m["namespace"]
         metric_name = m["metric_name"]
         dimensions_name = m["dimensions"][0]["name"]
