@@ -41,6 +41,9 @@ services:
         - <otc-exporter-address>:8000
 ```
 
+### Grafana Dashboards
+Grafana Dashboards for some OTC services are available on the [Grafana Community catalog](https://grafana.com/orgs/tiagoreichert)
+
 #### Known Limitations
 For every metric value it's needed to make a request against the Cloud Eye API.
 Unfortunately, there is no other way to gather metric information from the Cloud Eye API.
