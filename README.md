@@ -48,4 +48,7 @@ Bearing that in mind, take care to not include to much OTC resources, that can b
 limited using the NAMESPACES environment parameter.
 
 #### TODO's
-- Token validation
+- Show resource name instead of ID
+- Add support for Rancher Secrets (for Username/Password)
+- Prefix the exposed metrics name with 'otc_ces_*'
+- Token Validation
