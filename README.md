@@ -1,6 +1,8 @@
 # OTC CloudEye Prometheus Exporter
 Prometheus exporter that gather metrics from Open Telekom Cloud resources over Cloud Eye API
 
+### Required OTC Rights
+You will need a OTC user with Tenant Guest - Read Only role
 
 ### Environment Variables
 - REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 300) [default: 300]
