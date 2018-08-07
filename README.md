@@ -5,7 +5,7 @@ Prometheus exporter that gather metrics from Open Telekom Cloud resources over C
 You will need a OTC user with Tenant Guest - Read Only role
 
 ### Environment Variables
-- REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 300) [default: 300]
+- REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 90) [default: 300]
 - NAMESPACES: OTC Namespaces from which you want to get metrics (Example: DMS,ECS,RDS)
 - PROJECT_ID: OTC Project ID
 - TENANT_NAME: OTC Tenant Name
@@ -36,7 +36,7 @@ services:
 ### Prometheus YML Configuration
 ```yaml
   - job_name: 'OTC'
-    scrape_interval: 300s
+    scrape_interval: 60s
     metrics_path: "/"
     static_configs:
       - targets:
