@@ -28,5 +28,5 @@ ENV REFRESH_TIME 300
 ENV LOG_LEVEL INFO
 ENV RANCHER_SECRETS false
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
