@@ -47,9 +47,13 @@ def main():
 
 
 def get_name_mapping():
-    get_ecs_mapping()
-    get_dms_mapping()
-    get_rds_mapping()
+    namespaces = config.get('EXPORTER_CONFIG', 'namespaces').split(',')
+    if "ECS" in namespaces:
+        get_ecs_mapping()
+    if "DMS" in namespaces:
+        get_dms_mapping()
+    if "RDS" in namespaces:
+        get_rds_mapping()
 
 
 def get_dms_mapping():
