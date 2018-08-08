@@ -9,7 +9,7 @@ NAMESPACES | OTC Namespaces from which you want to get metrics | ECS,RDS,DDS,DMS
 PROJECT_ID | OTC Project ID that you can find on OTC GUI under `My Credential -> Project ID` | Valid Project ID | -
 TENANT_NAME | OTC Tenant Name that you can find on OTC GUI under `My Credential -> Domain Name` | Valid Tenant/Domain Name | -
 USERNAME | OTC Username with `Tenant Guest` role | Valid Username | - 
-PASSWORD | OTC Password | Valid Password | - 
+PASSWORD | OTC Password or Rancher Secret Name | Valid Password / Secret Name| - 
 RANCHER_SECRETS | If set to `true`* the password will be replaced by the Rancher Secret with the name defined on the variable `$PASSWORD` | true or false | false
 LOG_LEVEL | Exporter's log level | WARNING or INFO or DEBUG | INFO
 
