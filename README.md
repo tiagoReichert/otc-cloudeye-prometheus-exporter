@@ -1,17 +1,16 @@
 # OTC CloudEye Prometheus Exporter
 Prometheus exporter that gather metrics from Open Telekom Cloud resources over Cloud Eye API
 
-### Required OTC Rights
-You will need a OTC user with Tenant Guest - Read Only role
-
 ### Environment Variables
-- REFRESH_TIME: Time that exporter wait's until gather metrics again, value in seconds (min 90) [default: 300]
-- NAMESPACES: OTC Namespaces from which you want to get metrics (Example: DMS,ECS,RDS)
-- PROJECT_ID: OTC Project ID
-- TENANT_NAME: OTC Tenant Name
-- USERNAME: OTC Username
-- PASSWORD: OTC Password
-- LOG_LEVEL: Exporter's log level (Example: WARNING, INFO, DEBUG) [default: INFO]
+Name     | Description | Possible Values | Default Value
+---------|-------------|-----------------|-----------
+REFRESH_TIME | Time in seconds that exporter wait's to gather metrics again | Integer >60 | 300
+NAMESPACES | OTC Namespaces from which you want to get metrics | ECS,RDS,DDS,DMS,EVS,VPC,ELB... | -
+PROJECT_ID | OTC Project ID that you can find on OTC GUI under `My Credential -> Project ID` | Valid Project ID | -
+TENANT_NAME | OTC Tenant Name that you can find on OTC GUI under `My Credential -> Domain Name` | Valid Tenant/Domain Name | -
+USERNAME | OTC Username with `Tenant Guest` role | Valid Username | - 
+PASSWORD | OTC Password | Valid Password | - 
+LOG_LEVEL | Exporter's log level | WARNING or INFO or DEBUG | INFO
 
 ### Docker Compose
 ``` yaml
@@ -25,7 +24,7 @@ services:
       - "8000:8000"
     environment:
       - REFRESH_TIME=300
-      - NAMESPACES=ECS,DMS
+      - NAMESPACES=ECS,DMS,RDS
       - PROJECT_ID=<projectid>
       - TENANT_NAME=OTC-EU-DE-<tentantnumber>
       - USERNAME=foo
