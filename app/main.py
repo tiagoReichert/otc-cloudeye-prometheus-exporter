@@ -16,6 +16,7 @@ import logging
 import logging.config
 from prometheus_client import start_http_server, Gauge
 import time
+config = configparser.ConfigParser()
 
 
 def main():
@@ -24,7 +25,6 @@ def main():
 
     # Reading configuration file
     global config
-    config = configparser.ConfigParser()
     config._interpolation = configparser.ExtendedInterpolation()
     f = open('/app/config/app_config.ini')
     try:
@@ -121,10 +121,9 @@ def generate_prometheus_metrics(metrics):
     for m in metrics:
         namespace = m["namespace"]
         metric_name = ("%s_%s" % (namespace.replace(".", "_"), m["metric_name"])).lower()
-        dimensions_name = m["dimensions"][0]["name"]
         # Check if metric was not already created
         if "%s:%s" % (namespace, m["metric_name"]) not in prometheus_metrics.keys():
-            vars()[metric_name] = Gauge('otc_ces_%s' % metric_name, metric_name, ["unit", dimensions_name,
+            vars()[metric_name] = Gauge('otc_ces_%s' % metric_name, metric_name, ["unit", "resource_id",
                                                                                   "resource_name"])
             prometheus_metrics["%s:%s" % (namespace, m["metric_name"])] = eval(metric_name)
     return prometheus_metrics
@@ -159,9 +158,9 @@ def get_metric_value(prometheus_metrics, metrics):
                 resource_name = get_resource_name(resource_kind=namespace.replace("SYS.", ""),
                                                   resource_id=dimensions_value)
 
-                exec("prometheus_metrics[full_metric_name].labels(unit=resp['datapoints'][0]['unit'], "
-                     "%s=dimensions_value, resource_name=resource_name)."
-                     "set(resp['datapoints'][0]['average'])") % dimensions_name
+                prometheus_metrics[full_metric_name].labels(unit=resp['datapoints'][0]['unit'],
+                                                            resource_id=dimensions_value,
+                                                            resource_name=resource_name).set(resp['datapoints'][0]['average'])
 
                 logging.debug("{0} for '{1}={2}' ({3}) at {4} : {5}".format(full_metric_name, dimensions_name,
                                                                             dimensions_value, resource_name,
@@ -174,8 +173,9 @@ def get_metric_value(prometheus_metrics, metrics):
             get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
             break
         else:
-            logging.error("{0} for '{1}={2}' got HTTP Status Code: {3}".format(full_metric_name, dimensions_name,
-                                                                               dimensions_value, r.status_code))
+            logging.error("{0} for '{1}={2}' at {3} got HTTP Status Code: {4}".format(full_metric_name, dimensions_name,
+                                                                                      dimensions_value, current_time,
+                                                                                      r.status_code))
 
 
 # Check if we have a name for the specified resource, if not return id
