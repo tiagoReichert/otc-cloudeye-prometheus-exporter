@@ -120,11 +120,11 @@ def generate_prometheus_metrics(metrics):
     prometheus_metrics = {}
     for m in metrics:
         namespace = m["namespace"]
-        metric_name = "%s_%s" % (namespace.replace(".", "_"), m["metric_name"])
+        metric_name = ("%s_%s" % (namespace.replace(".", "_"), m["metric_name"])).lower()
         dimensions_name = m["dimensions"][0]["name"]
         # Check if metric was not already created
         if "%s:%s" % (namespace, m["metric_name"]) not in prometheus_metrics.keys():
-            vars()[metric_name] = Gauge('OTC_CES_%s' % metric_name, metric_name, ["unit", dimensions_name,
+            vars()[metric_name] = Gauge('otc_ces_%s' % metric_name, metric_name, ["unit", dimensions_name,
                                                                                   "resource_name"])
             prometheus_metrics["%s:%s" % (namespace, m["metric_name"])] = eval(metric_name)
     return prometheus_metrics
@@ -174,10 +174,8 @@ def get_metric_value(prometheus_metrics, metrics):
             get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
             break
         else:
-            logging.error("{0} for '{1}={2}' at {3} got HTTP Status Code: {4}".format(full_metric_name, dimensions_name,
-                                                                                      dimensions_value,
-                                                                                      datetime.fromtimestamp,
-                                                                                      r.status_code))
+            logging.error("{0} for '{1}={2}' got HTTP Status Code: {3}".format(full_metric_name, dimensions_name,
+                                                                               dimensions_value, r.status_code))
 
 
 # Check if we have a name for the specified resource, if not return id
