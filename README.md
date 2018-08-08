@@ -10,7 +10,9 @@ PROJECT_ID | OTC Project ID that you can find on OTC GUI under `My Credential ->
 TENANT_NAME | OTC Tenant Name that you can find on OTC GUI under `My Credential -> Domain Name` | Valid Tenant/Domain Name | -
 USERNAME | OTC Username with `Tenant Guest` role | Valid Username | - 
 PASSWORD | OTC Password | Valid Password | - 
+RANCHER_SECRETS | If set to `true`* the password will be replaced by the Rancher Secret with the name defined on the variable `$PASSWORD` | true or false | false
 LOG_LEVEL | Exporter's log level | WARNING or INFO or DEBUG | INFO
+\* On YML file (Docker Compose) you will need to use quotes like that: `RANCHER_SECRETS='true'`, otherwise the YML parser will parse it as a boolean and it will not work.
 
 ### Docker Compose
 ``` yaml

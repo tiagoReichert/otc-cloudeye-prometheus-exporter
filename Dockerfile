@@ -18,11 +18,15 @@ RUN mv /tmp/dockerize-alpine-linux-amd64-v0.6.1.tar.gz/dockerize /usr/local/bin/
 COPY ./app /app
 COPY ./config /app/config
 
+COPY entrypoint.sh /app/
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8000
 
 # Default variables
 ENV REFRESH_TIME 300
 ENV LOG_LEVEL INFO
+ENV RANCHER_SECRETS false
 
-CMD dockerize -no-overwrite -template /app/config/app_config.tmpl:/app/config/app_config.ini  -template /app/config/log_config.tmpl:/app/config/log_config.ini python /app/main.py
+ENTRYPOINT ["./entrypoint.sh"]
 
