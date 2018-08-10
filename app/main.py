@@ -62,6 +62,12 @@ def get_dms_mapping():
         for queue in json.loads(r.text)["queues"]:
             config.set('DMS_IDS', queue['id'], queue['name'])
             logging.debug("Created name entry for DMS '%s'='%s' successfully" % (queue['id'], queue['name']))
+            consumer_group_url = config.get('OTC_ENDPOINTS', 'dms_consumer_names').replace("<queue_id>", queue['id'])
+            r = requests.get(consumer_group_url, headers={'X-Auth-Token': get_token()})
+            if r.status_code == 200:
+                for group in json.loads(r.text)["groups"]:
+                    config.set('DMS_IDS', group['id'], '%s/%s' % (queue['name'], group['name']))
+                    logging.debug("Created name entry for DMS '%s'='%s' successfully" % (queue['id'], queue['name']))
         save_config_file()
     elif r.status_code == 401:
         logging.warn("Token seems to be expired, requesting a new one and retrying")

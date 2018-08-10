@@ -14,6 +14,7 @@ cloud_eye_base = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:proj
 available_metrics = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:project_id}/metrics
 ecs_names = https://ecs.eu-de.otc.t-systems.com/v2.1/${OTC_CREDENTIALS:project_id}/servers
 dms_names = https://dms.eu-de.otc.t-systems.com/v1.0/${OTC_CREDENTIALS:project_id}/queues?include_deadletter=true
+dms_consumer_names = https://dms.eu-de.otc.t-systems.com/v1.0/${OTC_CREDENTIALS:project_id}/queues/<queue_id>/groups?include_deadletter=true
 rds_names = https://rds.eu-de.otc.t-systems.com/rds/v1/${OTC_CREDENTIALS:project_id}/instances
 
 [JSON_REQUEST]
