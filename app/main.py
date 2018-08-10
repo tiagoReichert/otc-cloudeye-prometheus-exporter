@@ -66,8 +66,9 @@ def get_dms_mapping():
             r = requests.get(consumer_group_url, headers={'X-Auth-Token': get_token()})
             if r.status_code == 200:
                 for group in json.loads(r.text)["groups"]:
-                    config.set('DMS_IDS', group['id'], '%s/%s' % (queue['name'], group['name']))
-                    logging.debug("Created name entry for DMS '%s'='%s' successfully" % (queue['id'], queue['name']))
+                    group_name = '%s/%s' % (queue['name'], group['name'])
+                    config.set('DMS_IDS', group['id'], group_name)
+                    logging.debug("Created name entry for DMS Group '%s'='%s' successfully" % (group['id'], group_name))
         save_config_file()
     elif r.status_code == 401:
         logging.warn("Token seems to be expired, requesting a new one and retrying")
