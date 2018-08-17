@@ -1,4 +1,5 @@
-[![Apache 2.0 License](http://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat)](LICENSE)
+[![Apache 2.0 License](http://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat)](LICENSE) [![Prometheus OTC Exporter](https://img.shields.io/badge/prometheus-OTC%20CloudEye%20Exporter-red.svg?style=flat)](https://prometheus.io/docs/instrumenting/exporters/#other-monitoring-systems) 
+
 
 # OTC CloudEye Prometheus Exporter
 Prometheus exporter that gather metrics from Open Telekom Cloud resources over Cloud Eye API
