@@ -59,6 +59,3 @@ Unfortunately, there is no other way to gather metric information from the Cloud
 Bearing that in mind, take care to not include to much OTC resources, that can be
 limited using the NAMESPACES environment parameter.
 
-#### Kanban Board
-
-[![Trello Board](https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Trello-logo-blue.svg/200px-Trello-logo-blue.svg.png)](https://trello.com/b/IgXJprlt)
