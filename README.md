@@ -1,4 +1,4 @@
-[![Apache 2.0 License](http://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat)](LICENSE) [![Prometheus OTC Exporter](https://img.shields.io/badge/prometheus-OTC%20CloudEye%20Exporter-red.svg?style=flat)](https://prometheus.io/docs/instrumenting/exporters/#other-monitoring-systems) 
+[![Apache 2.0 License](http://img.shields.io/badge/license-Apache%202.0-green.svg?style=flat)](LICENSE) [![Prometheus OTC Exporter](https://img.shields.io/badge/prometheus-OTC%20CloudEye%20Exporter-red.svg?style=flat)](https://prometheus.io/docs/instrumenting/exporters/#other-monitoring-systems) [![Kanban board](https://img.shields.io/badge/kanban-Trello-blue.svg?style=flat)](https://trello.com/b/IgXJprlt) 
 
 
 # OTC CloudEye Prometheus Exporter
