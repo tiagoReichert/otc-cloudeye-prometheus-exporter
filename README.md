@@ -55,7 +55,10 @@ Grafana Dashboards for some OTC services are available on the [Grafana Community
 
 #### Known Limitations
 For every metric value it's needed to make a request against the Cloud Eye API.
-Unfortunately, there is no other way to gather metric information from the Cloud Eye API.
-Bearing that in mind, take care to not include to much OTC resources, that can be
-limited using the NAMESPACES environment parameter.
+Unfortunately, there is no other way to gather metric information from the Cloud Eye 
+API and accordingly the oficial support it's not planned to be release such feature.
+Bearing that in mind, take care to not include to much OTC resources, that can be 
+limited using the NAMESPACES environment parameter. 
+(The threshold of requests against the OTC API allowed is less than 140 times in one minute)
+
 
