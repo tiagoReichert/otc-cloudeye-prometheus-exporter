@@ -6,7 +6,8 @@
 #       Author: Tiago M Reichert
 #       Initial Release: 04/08/2018
 #       Email: tiago@reichert.eti.br
-#       Version: v0.1a
+#       Version: v0.2a
+#       Contributor: Johannes Grumboeck <johannes@grumboeck.net>
 # --------------------------------------------------------------
 import requests
 import json
@@ -54,6 +55,8 @@ def get_name_mapping():
         get_dms_mapping()
     if "RDS" in namespaces:
         get_rds_mapping()
+    if "ELB" in namespaces:
+        get_elb_mapping()
 
 
 def get_dms_mapping():
@@ -110,6 +113,21 @@ def get_ecs_mapping():
         logging.error("Could not gather ECS names, got result code '%s'" % r.status_code)
 
 
+def get_elb_mapping():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'elb_names'), headers={'X-Auth-Token': get_token()})
+    if r.status_code == 200:
+        for loadbalancer in json.loads(r.text)["loadbalancers"]:
+            config.set('ELB_IDS', loadbalancer['id'], loadbalancer['name'])
+            logging.debug("Created name entry for ELB '%s'='%s' successfully" % (loadbalancer['id'], loadbalancer['name']))
+        save_config_file()
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        request_token()
+        get_elb_mapping()
+    else:
+        logging.error("Could not gather ELB names, got result code '%s'" % r.status_code)
+
+
 def get_available_metrics():
     r = requests.get(config.get('OTC_ENDPOINTS', 'available_metrics'), headers={'X-Auth-Token': get_token()})
     if r.status_code == 200:
@@ -155,6 +173,10 @@ def get_metric_value(prometheus_metrics, metrics):
         dimensions_name = m["dimensions"][0]["name"]
         dimensions_value = m["dimensions"][0]["value"]
         full_metric_name = "%s:%s" % (namespace, metric_name)
+
+        # For ELB skip metrics per listener, as I don't know how to represent them yet and they would overwrite the overall ELB metric
+        if namespace == "SYS.ELB" and len(m["dimensions"]) > 1:
+            continue
 
         url = "{0}?namespace={1}&metric_name={2}&dim.0={3},{4}&from={5}&to={6}&period=300" \
               "&filter=average".format(cloud_eye_base, namespace, metric_name, dimensions_name, dimensions_value,
