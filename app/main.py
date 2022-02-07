@@ -57,6 +57,8 @@ def get_name_mapping():
         get_rds_mapping()
     if "ELB" in namespaces:
         get_elb_mapping()
+    if "NAT" in namespaces:
+        get_nat_mapping()
 
 
 def get_dms_mapping():
@@ -127,6 +129,19 @@ def get_elb_mapping():
     else:
         logging.error("Could not gather ELB names, got result code '%s'" % r.status_code)
 
+def get_nat_mapping():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'nat_names'), headers={'X-Auth-Token': get_token()})
+    if r.status_code == 200:
+        for nat_gateway in json.loads(r.text)["nat_gateways"]:
+            config.set('NAT_IDS', nat_gateway['id'], nat_gateway['name'])
+            logging.debug("Created name entry for NAT '%s'='%s' successfully" % (nat_gateway['id'], nat_gateway['name']))
+        save_config_file()
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        request_token()
+        get_nat_mapping()
+    else:
+        logging.error("Could not gather NAT names, got result code '%s'" % r.status_code)
 
 def get_available_metrics():
     r = requests.get(config.get('OTC_ENDPOINTS', 'available_metrics'), headers={'X-Auth-Token': get_token()})
