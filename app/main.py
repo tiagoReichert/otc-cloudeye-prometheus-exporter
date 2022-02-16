@@ -43,7 +43,7 @@ def main():
     while True:
         get_name_mapping()
         metrics = get_available_metrics()
-        get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
+        get_metric_values(prometheus_metrics=prometheus_metrics, metrics=metrics)
         time.sleep(float(config.get('EXPORTER_CONFIG', 'refresh_time')))
 
 
