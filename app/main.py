@@ -59,6 +59,8 @@ def get_name_mapping():
         get_elb_mapping()
     if "NAT" in namespaces:
         get_nat_mapping()
+    if "DCS" in namespaces:
+        get_dcs_mapping()
 
 
 def get_dms_mapping():
@@ -143,6 +145,24 @@ def get_nat_mapping():
     else:
         logging.error("Could not gather NAT names, got result code '%s'" % r.status_code)
 
+
+def get_dcs_mapping():
+    r = requests.get(config.get('OTC_ENDPOINTS', 'dcs_names'), headers={'X-Auth-Token': get_token(),
+                                                                        'Content-Type': 'application/json',
+                                                                        'X-Language': 'en-us'})
+    if r.status_code == 200:
+        for instance in json.loads(r.text)["instances"]:
+            config.set('DCS_IDS', instance['instance_id'], instance['name'])
+            logging.debug("Created name entry for DCS '%s'='%s' successfully" % (instance['instance_id'], instance['name']))
+        save_config_file()
+    elif r.status_code == 401:
+        logging.warn("Token seems to be expired, requesting a new one and retrying")
+        request_token()
+        get_dcs_mapping()
+    else:
+        logging.error("Could not gather DCS names, got result code '%s'" % r.status_code)
+
+
 def get_available_metrics():
     r = requests.get(config.get('OTC_ENDPOINTS', 'available_metrics'), headers={'X-Auth-Token': get_token()})
     if r.status_code == 200:
@@ -173,57 +193,95 @@ def generate_prometheus_metrics(metrics):
     return prometheus_metrics
 
 
-def get_metric_value(prometheus_metrics, metrics):
+def get_metric_values(prometheus_metrics, metrics):
     current_time = get_current_metrics_time()
     cloud_eye_base = config.get('OTC_ENDPOINTS', 'cloud_eye_base')
+    metrics_set = []
 
-    # For each OTC metric from the defined Namespaces
-    for idx, m in enumerate(metrics, start=1):
-        # After every 10 metrics sleep for 1 seconds (otherwise OTC API get's overloaded)
-        if idx % 10 == 0:
-            time.sleep(1)
+    # It seems that we cannot batch metrics from different Namespaces
+    # Therefore we iterate over the wanted Namespaces
+    wanted_namespaces = ['SYS.%s' % n for n in config.get('EXPORTER_CONFIG', 'namespaces').split(',')]
+    for wn in wanted_namespaces:
+        # filter metrics
+        filtered = [ item for item in metrics if item["namespace"] == wn ]
 
-        namespace = m["namespace"]
-        metric_name = m["metric_name"]
-        dimensions_name = m["dimensions"][0]["name"]
-        dimensions_value = m["dimensions"][0]["value"]
-        full_metric_name = "%s:%s" % (namespace, metric_name)
+        # For each OTC metric from the filtered Namespace
+        for idx, m in enumerate(filtered, start=1):
+            namespace = m["namespace"]
+            metric_name = m["metric_name"]
+            dimensions_name = m["dimensions"][0]["name"]
+            dimensions_value = m["dimensions"][0]["value"]
+            full_metric_name = "%s:%s" % (namespace, metric_name)
 
-        # For ELB skip metrics per listener, as I don't know how to represent them yet and they would overwrite the overall ELB metric
-        if namespace == "SYS.ELB" and len(m["dimensions"]) > 1:
-            continue
+            # For ELB skip metrics per listener, as I don't know how to represent them yet and they would overwrite the overall ELB metric
+            if namespace == "SYS.ELB" and len(m["dimensions"]) > 1:
+                continue
 
-        url = "{0}?namespace={1}&metric_name={2}&dim.0={3},{4}&from={5}&to={6}&period=300" \
-              "&filter=average".format(cloud_eye_base, namespace, metric_name, dimensions_name, dimensions_value,
-                                       current_time[0], current_time[1])
+            metric = {
+                "namespace": namespace,
+                "dimensions": [
+                    {
+                        "name": dimensions_name,
+                        "value": dimensions_value
+                    }
+                ],
+                "metric_name": metric_name
+            }
 
-        time.sleep(0.1)  # Wait for 100 milliseconds before every request (needed to don't overload OTC API)
-        r = requests.get(url, headers={'X-Auth-Token': get_token()})
+            metrics_set.append(metric)
 
-        if r.status_code == 200:
-            resp = json.loads(r.text)
-            if resp['datapoints']:
-                resource_name = get_resource_name(resource_kind=namespace.replace("SYS.", ""),
-                                                  resource_id=dimensions_value)
+            # After each 10 metrics query them as a batch
+            if idx % 10 == 0 or idx == len(filtered):
 
-                prometheus_metrics[full_metric_name].labels(unit=resp['datapoints'][0]['unit'],
-                                                            resource_id=dimensions_value,
-                                                            resource_name=resource_name).set(resp['datapoints'][0]['average'])
+                # Create payload for batch request
+                payload = {
+                    "metrics": metrics_set,
+                    "from": current_time[0],
+                    "to": current_time[1],
+                    "period": "300",
+                    "filter": "average"
+                }
 
-                logging.debug("{0} for '{1}={2}' ({3}) at {4} : {5}".format(full_metric_name, dimensions_name,
-                                                                            dimensions_value, resource_name,
-                                                                            datetime.fromtimestamp(resp['datapoints'][0]['timestamp'] / 1000.0),
-                                                                            resp['datapoints'][0]['average']))
+                # Reset metrics_set for next batch
+                metrics_set = []
 
-        elif r.status_code == 401:
-            logging.warn("Token seems to be expired, requesting a new one and retrying")
-            request_token()
-            get_metric_value(prometheus_metrics=prometheus_metrics, metrics=metrics)
-            break
-        else:
-            logging.error("{0} for '{1}={2}' at {3} got HTTP Status Code: {4}".format(full_metric_name, dimensions_name,
-                                                                                      dimensions_value, current_time,
-                                                                                      r.status_code))
+
+                # Wait for 100 milliseconds before every request (needed to don't overload OTC API)
+                time.sleep(0.1)
+                r = requests.post(cloud_eye_base, headers={'X-Auth-Token': get_token()},
+                                data=json.dumps(payload))
+
+                if r.status_code == 200:
+                    resp = json.loads(r.text)
+                    if resp['metrics']:
+                        for mr in resp['metrics']:
+                            if len(mr['datapoints']) > 0:
+                                namespace = mr["namespace"]
+                                metric_name = mr["metric_name"]
+                                dimensions_name = mr["dimensions"][0]["name"]
+                                dimensions_value = mr["dimensions"][0]["value"]
+                                full_metric_name = "%s:%s" % (namespace, metric_name)
+                                resource_name = get_resource_name(resource_kind=namespace.replace("SYS.", ""),
+                                                                resource_id=dimensions_value)
+
+                                prometheus_metrics[full_metric_name].labels(unit=mr['unit'],
+                                                                            resource_id=dimensions_value,
+                                                                            resource_name=resource_name).set(mr['datapoints'][0]['average'])
+    
+                                logging.debug("{0} for '{1}={2}' ({3}) at {4} : {5}".format(full_metric_name, dimensions_name,
+                                                                                dimensions_value, resource_name,
+                                                                                datetime.fromtimestamp(mr['datapoints'][0]['timestamp'] / 1000.0),
+                                                                                mr['datapoints'][0]['average']))
+
+
+                elif r.status_code == 401:
+                    logging.warn("Token seems to be expired, requesting a new one and retrying")
+                    request_token()
+                    get_metric_values(
+                        prometheus_metrics=prometheus_metrics, metrics=metrics)
+                    break
+                else:
+                    logging.error("Batch metrics request got HTTP Status Code {0} and response: {1}".format(r.status_code, r.text))
 
 
 # Check if we have a name for the specified resource, if not return id
@@ -235,10 +293,10 @@ def get_resource_name(resource_kind, resource_id):
         return resource_id
 
 
-# Returns two time values in milliseconds with an difference of 1 second (needed by OTC API)
+# Returns two time values in milliseconds with an difference of 10 second (needed by OTC API)
 def get_current_metrics_time():
     current_time = int(round(time.time() * 1000))
-    return current_time-1000, current_time
+    return current_time-10000, current_time
 
 
 def get_token():

@@ -10,7 +10,7 @@ password = {{ .Env.PASSWORD }}
 
 [OTC_ENDPOINTS]
 request_token = https://iam.eu-de.otc.t-systems.com/v3/auth/tokens
-cloud_eye_base = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:project_id}/metric-data
+cloud_eye_base = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:project_id}/batch-query-metric-data
 available_metrics = https://ces.eu-de.otc.t-systems.com/V1.0/${OTC_CREDENTIALS:project_id}/metrics
 ecs_names = https://ecs.eu-de.otc.t-systems.com/v2.1/${OTC_CREDENTIALS:project_id}/servers
 dms_names = https://dms.eu-de.otc.t-systems.com/v1.0/${OTC_CREDENTIALS:project_id}/queues?include_deadletter=true
@@ -18,6 +18,7 @@ dms_consumer_names = https://dms.eu-de.otc.t-systems.com/v1.0/${OTC_CREDENTIALS:
 rds_names = https://rds.eu-de.otc.t-systems.com/rds/v1/${OTC_CREDENTIALS:project_id}/instances
 elb_names = https://elb.eu-de.otc.t-systems.com/v2.0/lbaas/loadbalancers
 nat_names = https://nat.eu-de.otc.t-systems.com/v2.0/nat_gateways
+dcs_names = https://dcs.eu-de.otc.t-systems.com/v1.0/${OTC_CREDENTIALS:project_id}/instances
 
 [JSON_REQUEST]
 token =  {
@@ -49,3 +50,5 @@ token =  {
 [ELB_IDS]
 
 [NAT_IDS]
+
+[DCS_IDS]
